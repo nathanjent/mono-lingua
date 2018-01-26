@@ -1,0 +1,13 @@
+[package]
+name = "frontend"
+version = "0.1.0"
+authors = ["nathanjent <nathanjent@gmail.com>"]
+
+[dependencies]
+
+[dependencies.core]
+path = "../core"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
