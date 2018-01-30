@@ -2,14 +2,19 @@ extern crate actix_web;
 extern crate env_logger;
 
 use actix_web::*;
-use std::{io, env};
+use std::env;
+use std::path::PathBuf;
 
 /// 404 handler
-fn p404(req: HttpRequest) -> Result<HttpResponse> {
+fn p404(_req: HttpRequest) -> Result<HttpResponse> {
 
     // html
-    let html = r#"<!DOCTYPE html><html><head><title>actix - basics</title><link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" /></head>
-<body>
+    let html = r#"<!DOCTYPE html>
+    <html>
+    <head>
+    <title>actix - basics</title>
+    </head>
+    <body>
     <a href="index.html">back to home</a>
     <h1>404</h1>
 </body>
@@ -43,10 +48,11 @@ fn main() {
                     .header("LOCATION", "/index.html")
                     .finish()
             }))
-            .handler("/", fs::StaticFiles::new("dist/", true))
+            .handler("/dist", fs::StaticFiles::new("dist/", false))
+            .handler("/", fs::StaticFiles::new("dist/", false))
             .default_resource(|r| {
                 r.method(Method::GET).f(p404);
-                r.route().p(pred::Not(pred::Get())).f(|req| httpcodes::HTTPMethodNotAllowed);
+                r.route().p(pred::Not(pred::Get())).f(|_req| httpcodes::HTTPMethodNotAllowed);
             })
         })
         .bind("127.0.0.1:8081").expect("Can not bind to 127.0.0.1:8081")

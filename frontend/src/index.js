@@ -1,5 +1,7 @@
-module.exports = import('./frontend.wasm').then(function ({add}) {
-  console.log("3 + 5 = " + add(3, 5));
+module.exports = import('./frontend.wasm').then(function ({add_two}) {
+  console.log("3 + 5 = " + add_two(3, 5));
 
-  return add(2, 3);
+  return add_two(2, 3);
 });
+
+console.log("something" + model.exports);
