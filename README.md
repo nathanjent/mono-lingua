@@ -1,0 +1,3 @@
+# Mono Lingua
+
+A test project to combine the WebAssembly framework of the [stdweb](https://github.com/koute/stdweb) crate with the server framework of the [Actix Web](https://github.com/actix/actix-web) crate. The plan is to have the client and server code share a core codebase that contains the data and shared logic of both. Hopefully this will help to eliminate the need to have a mirrored implementation of the data objects communicated between client and server. Copying code between client and server languages is often a point of error that can mitigated by schemas for serialization formats or generated code for protocol buffers. JavaScript people have Node.js and now, with WASM, Rust can have the same thing.
