@@ -2,44 +2,40 @@ DEBUG_DIR =  target/debug
 RELEASE_DIR =  target/release
 WASM_DIR =  target/wasm32-unknown-unknown/release
 DEPLOY_DIR = dist
+PARCEL_BIN = parcel
 
 .PHONY: all debug release clean
 
 all: debug
 
-debug: buildd buildf
+debug: builds buildc
 
-buildd:
-	mkdir -p dist/
+release: buildsr buildc
+
+builds:
 	cd server ; \
 		cargo build ; \
 		cp -f $(DEBUG_DIR)/server ../serve
 
-release: buildr buildf
-
-buildr:
-	mkdir -p dist/
+buildsr:
 	cd server ; \
 		cargo build --release ; \
 		cp -f $(RELEASE_DIR)/server ../serve
 
-buildf:
-	cd frontend ; \
-		mkdir -p dist/ ; \
-		cargo build --release ; \
-		cp -f $(WASM_DIR)/frontend.wasm src/ ; \
-		parcel build src/index.html ; \
-		mv -u $(DEPLOY_DIR)/* ../$(DEPLOY_DIR)/
+buildc:
+	cd client ; \
+		parcel build --out-dir ../$(DEPLOY_DIR) --public-url . src/index.html
 
-clean: cleanb cleanf
+clean: cleans cleanc
 
-cleanb:
-	rm -rf $(DEPLOY_DIR)/
+cleans:
 	rm -f serve
 	cd server ; \
 		cargo clean
 
-cleanf:
-	cd frontend ; \
+cleanc:
+	rm -rf $(DEPLOY_DIR)/
+	cd client ; \
 		cargo clean ; \
-		rm -rf $(DEPLOY_DIR)/
+		rm -rf .cache ; \
+		rm -rf node_modules

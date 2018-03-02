@@ -1,13 +1,12 @@
 [package]
-name = "frontend"
-version = "0.1.0"
 authors = ["nathanjent <nathanjent@gmail.com>"]
+name = "client"
+version = "0.1.0"
 
 [dependencies]
+stdweb = "0.4.0"
+urlparse = "0.7.3"
 
 [dependencies.core]
 path = "../core"
 version = "0.1.0"
-
-[lib]
-crate-type = ["cdylib"]
