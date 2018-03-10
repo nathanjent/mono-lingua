@@ -1,18 +1,26 @@
 #[macro_use]
 extern crate stdweb;
 extern crate urlparse;
+extern crate serde;
+extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
+
+extern crate core;
 
 use std::rc::Rc;
 
 use stdweb::traits::*;
 use stdweb::unstable::TryInto;
 use stdweb::web::{document, HtmlElement, WebSocket, window};
-use urlparse::Url;
-
 use stdweb::web::event::{KeyPressEvent, SocketCloseEvent, SocketErrorEvent, SocketMessageEvent,
                          SocketOpenEvent};
-
 use stdweb::web::html_element::InputElement;
+use stdweb::serde::Serde;
+
+use urlparse::Url;
+
+use core::*;
 
 // Shamelessly stolen from webplatform's TodoMVC example.
 macro_rules! enclose {
@@ -23,6 +31,14 @@ macro_rules! enclose {
         }
     };
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+struct WsMessage {
+    uuid: String,
+    data: SharedObj,
+}
+
+js_deserializable!( WsMessage );
 
 fn main() {
     stdweb::initialize();
@@ -64,7 +80,9 @@ fn main() {
     }));
 
     ws.add_event_listener(enclose!( (output_msg) move |event: SocketMessageEvent| {
-        output_msg(&event.data().into_text().unwrap());
+        let msg = event.data().into_text().unwrap();
+        let val: WsMessage = serde_json::from_str(&*msg).unwrap();
+        output_msg(&format!("{}: {}", val.data.name, val.data.message));
     }));
 
     let text_entry: InputElement = document()
@@ -78,9 +96,23 @@ fn main() {
             event.prevent_default();
 
             let text: String = text_entry.raw_value();
-            if text.is_empty() == false {
+            if !text.is_empty() {
                 text_entry.set_raw_value("");
-                ws.send_text(&text).unwrap();
+
+                let val = WsMessage {
+                    uuid: "FEED-DEAD-BEEF-BEAD-00000".into(),
+                    data: SharedObj {
+                        name: "user_name".into(),
+                        message: text.to_string(),
+                    },
+                };
+                let out_val = serde_json::to_string(&val).unwrap();
+                js! {
+                    console.log(@{&out_val});
+                };
+                ws.send_text(&out_val).map_err(|e| {
+                    stdweb::private::ConversionError::Custom("WebSocket".to_string())
+                });
             }
        }
     }));

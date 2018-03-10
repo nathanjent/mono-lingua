@@ -9,14 +9,15 @@ path = "src/bin/server.rs"
 
 [dependencies]
 env_logger = "*"
+bytes = "0.4"
+futures = "0.1"
 
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
+json = "*"
 
 actix = "0.5"
 actix-web = "0.4.0"
 
-[dependencies.core]
-path = "../core"
-version = "0.1.0"
+core = { path="../core" , version = "0.1.0" }

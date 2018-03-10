@@ -1,6 +1,10 @@
 [package]
+authors = ["nathanjent <nathanjent@gmail.com>"]
 name = "core"
 version = "0.1.0"
-authors = ["nathanjent <nathanjent@gmail.com>"]
 
 [dependencies]
+json = "0.11.13"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
