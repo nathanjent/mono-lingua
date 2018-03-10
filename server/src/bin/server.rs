@@ -93,19 +93,21 @@ fn main() {
 
     let sys = actix::System::new("ws-example");
 
-    HttpServer::new(|| {
+    HttpServer::new(|| vec![
+        // Websocket
+        Application::new()
+            .prefix("/ws")
+            .resource("/", |r| r.route().f(index)),
         Application::new()
             // enable logger
             .middleware(middleware::Logger::default())
-            // Websocket
-            .resource("/ws/", |r| r.route().f(index))
             .handler("/dist", fs::StaticFiles::new("dist/", false).index_file("index.html"))
             .handler("/", fs::StaticFiles::new("dist/", false).index_file("index.html"))
             .default_resource(|r| {
                 r.method(Method::GET).f(p404);
                 r.route().p(pred::Not(pred::Get())).f(|_req| httpcodes::HTTPMethodNotAllowed);
             })
-    }).bind("127.0.0.1:8081")
+    ]).bind("127.0.0.1:8081")
         .expect("Can not bind to 127.0.0.1:8081")
         .start();
 
