@@ -3,53 +3,28 @@ extern crate actix_web;
 extern crate env_logger;
 #[macro_use] extern crate serde_derive;
 extern crate serde_json;
+extern crate chrono;
 
 extern crate core;
 
 use actix::*;
 use actix_web::*;
 use std::env;
+use chrono::prelude::*;
 
 use core::*;
 
-/// 404 handler
-fn p404(_req: HttpRequest) -> Result<HttpResponse> {
-    // html
-    let html = r#"<!DOCTYPE html>
-    <html>
-    <head>
-    <title>actix - basics</title>
-    </head>
-    <body>
-    <a href="index.html">back to home</a>
-    <h1>404</h1>
-</body>
-</html>"#;
-
-    // response
-    Ok(HttpResponse::build(StatusCode::NOT_FOUND)
-        .content_type("text/html; charset=utf-8")
-        .body(html)
-        .unwrap())
-}
-
 /// This handler uses `HttpRequest::json()` for loading serde json object.
 fn index(req: HttpRequest) -> Result<HttpResponse> {
-    ws::start(req, WsMessage {
-        uuid: "BEEF".into(),
-        data: SharedObj {
-            name: "blah".into(),
-            message: "".into(),
-        },
-    })
+    ws::start(req, WsMessage(SharedObj {
+        timestamp: None,
+        message: "".into(),
+    }))
 }
 
 /// Define http actor
 #[derive(Debug, Serialize, Deserialize)]
-struct WsMessage {
-    uuid: String,
-    data: SharedObj,
-}
+struct WsMessage(SharedObj);
 
 impl Actor for WsMessage {
     type Context = ws::WebsocketContext<Self>;
@@ -64,14 +39,11 @@ impl StreamHandler<ws::Message, ws::WsError> for WsMessage {
             ws::Message::Text(text) => {
                 let _ = serde_json::from_str(&text)
                     .and_then(|val: WsMessage| {
-                    
-                        let out_val = WsMessage {
-                            uuid: val.uuid,
-                            data: SharedObj {
-                                name: val.data.name,
-                                message: val.data.message,
-                            },
-                        };
+                        let timestamp = Utc::now().to_rfc3339();
+                        let out_val = WsMessage(SharedObj {
+                            timestamp: Some(timestamp),
+                            message: val.0.message,
+                        });
                         println!("WS outgoing: {:?}", out_val);
                         ctx.text(serde_json::to_string(&out_val).unwrap());
                         Ok(())
@@ -91,7 +63,7 @@ fn main() {
     env::set_var("RUST_BACKTRACE", "1");
     env_logger::init();
 
-    let sys = actix::System::new("ws-example");
+    let sys = actix::System::new("mono-lingua-example");
 
     HttpServer::new(|| vec![
         // Websocket
@@ -99,14 +71,8 @@ fn main() {
             .prefix("/ws")
             .resource("/", |r| r.route().f(index)),
         Application::new()
-            // enable logger
             .middleware(middleware::Logger::default())
-            .handler("/dist", fs::StaticFiles::new("dist/", false).index_file("index.html"))
             .handler("/", fs::StaticFiles::new("dist/", false).index_file("index.html"))
-            .default_resource(|r| {
-                r.method(Method::GET).f(p404);
-                r.route().p(pred::Not(pred::Get())).f(|_req| httpcodes::HTTPMethodNotAllowed);
-            })
     ]).bind("127.0.0.1:8081")
         .expect("Can not bind to 127.0.0.1:8081")
         .start();

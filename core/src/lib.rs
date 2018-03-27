@@ -3,6 +3,6 @@ extern crate serde_json;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SharedObj {
-    pub name: String,
+    pub timestamp: Option<String>,
     pub message: String,
 }

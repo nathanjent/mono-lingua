@@ -12,11 +12,10 @@ use std::rc::Rc;
 
 use stdweb::traits::*;
 use stdweb::unstable::TryInto;
-use stdweb::web::{document, HtmlElement, WebSocket, window};
+use stdweb::web::{Date, document, HtmlElement, WebSocket, window};
 use stdweb::web::event::{KeyPressEvent, SocketCloseEvent, SocketErrorEvent, SocketMessageEvent,
                          SocketOpenEvent};
 use stdweb::web::html_element::InputElement;
-use stdweb::serde::Serde;
 
 use urlparse::Url;
 
@@ -33,10 +32,7 @@ macro_rules! enclose {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct WsMessage {
-    uuid: String,
-    data: SharedObj,
-}
+struct WsMessage(SharedObj);
 
 js_deserializable!( WsMessage );
 
@@ -82,7 +78,12 @@ fn main() {
     ws.add_event_listener(enclose!( (output_msg) move |event: SocketMessageEvent| {
         let msg = event.data().into_text().unwrap();
         let val: WsMessage = serde_json::from_str(&*msg).unwrap();
-        output_msg(&format!("{}: {}", val.data.name, val.data.message));
+        if let Some(timestamp) = val.0.timestamp {
+            let date = Date::from_iso8601(&timestamp);
+            output_msg(&format!("{}: {}", date.to_time_string(), val.0.message));
+        } else {
+            output_msg(&format!("{}", val.0.message));
+        }
     }));
 
     let text_entry: InputElement = document()
@@ -99,13 +100,11 @@ fn main() {
             if !text.is_empty() {
                 text_entry.set_raw_value("");
 
-                let val = WsMessage {
-                    uuid: "FEED-DEAD-BEEF-BEAD-00000".into(),
-                    data: SharedObj {
-                        name: "user_name".into(),
-                        message: text.to_string(),
-                    },
-                };
+                let val = WsMessage(SharedObj {
+                    timestamp: None,
+                    message: text.to_string(),
+                });
+
                 let out_val = serde_json::to_string(&val).unwrap();
                 js! {
                     console.log(@{&out_val});
