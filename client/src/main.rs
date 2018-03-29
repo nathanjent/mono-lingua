@@ -80,7 +80,7 @@ fn main() {
         let val: WsMessage = serde_json::from_str(&*msg).unwrap();
         if let Some(timestamp) = val.0.timestamp {
             let date = Date::from_iso8601(&timestamp);
-            output_msg(&format!("{}: {}", date.to_time_string(), val.0.message));
+            output_msg(&format!("{}:{} : {}", date.get_hours(), date.get_utc_minutes(), val.0.message));
         } else {
             output_msg(&format!("{}", val.0.message));
         }
