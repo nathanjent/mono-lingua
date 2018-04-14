@@ -80,7 +80,7 @@ fn main() {
         let val: WsMessage = serde_json::from_str(&*msg).unwrap();
         if let Some(timestamp) = val.0.timestamp {
             let date = Date::from_iso8601(&timestamp);
-            output_msg(&format!("{}:{} : {}", date.get_hours(), date.get_minutes(), val.0.message));
+            output_msg(&format!("{:02}:{:02} : {}", date.get_hours(), date.get_minutes(), val.0.message));
         } else {
             output_msg(&format!("{}", val.0.message));
         }
@@ -109,7 +109,7 @@ fn main() {
                 js! {
                     console.log(@{&out_val});
                 };
-                ws.send_text(&out_val).map_err(|e| {
+                ws.send_text(&out_val).map_err(|_e| {
                     stdweb::private::ConversionError::Custom("WebSocket".to_string())
                 });
             }
